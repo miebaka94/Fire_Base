@@ -1,106 +1,84 @@
 "use client"
-import React, { useState } from "react";
+import React, { useState } from 'react';
+import Item from "./item";
+import itemsData from './items.json';
 
-export default function NewItem() {
-  // State for form fields
-  const [name, setName] = useState("");
-  const [quantity, setQuantity] = useState(1);
-  const [category, setCategory] = useState("produce");
+export default function ItemList() {
+  const [sortBy, setSortBy] = useState("name");
+  const [items, setItems] = useState(itemsData);
 
-  // State to manage the icon change on submission
-  const [isSubmitted, setIsSubmitted] = useState(false);
+  // Function to group items by category
+  const groupByCategory = (items) => {
+    return items.reduce((groups, item) => {
+      const { category } = item;
+      groups[category] = groups[category] || [];
+      groups[category].push(item);
+      return groups;
+    }, {});
+  };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
+  // Function to sort items by the current method
+  const sortItems = (items, sortBy) => {
+    switch (sortBy) {
+      case 'name':
+        return [...items].sort((a, b) => a.name.localeCompare(b.name));
+      case 'category':
+        return [...items].sort((a, b) => a.category.localeCompare(b.category));
+      default:
+        return items; // In case of groupedCategory, we handle sorting separately
+    }
+  };
 
-    // Handle the form submission logic here
-    const item = { name, quantity, category };
-    console.log(item);
-    alert(`Name: ${name}, Quantity: ${quantity}, Category: ${category}`);
+  // Determine how to sort or group items based on `sortBy`
+  const sortedOrGroupedItems = sortBy === 'groupedCategory'
+    ? groupByCategory(sortItems(items, 'name')) // Group by category after sorting by name
+    : sortItems(items, sortBy);
 
-    // Change the icon to a check mark
-    setIsSubmitted(true);
-
-    // Reset the icon back to a plus sign after 2 seconds
-    setTimeout(() => {
-      setIsSubmitted(false);
-    }, 2000);
-
-    // Optionally, reset the form fields to their initial values here
-    setName("");
-    setQuantity(1);
-    setCategory("produce");
+  // Render items or grouped items based on `sortBy`
+  const renderItems = () => {
+    if (sortBy === 'groupedCategory') {
+      return Object.entries(sortedOrGroupedItems).map(([category, items]) => (
+        <li key={category} className="border p-2">
+          <h3 className="capitalize font-bold">{category}</h3>
+          {items.map((item) => (
+            <Item key={item.id} {...item} />
+          ))}
+        </li>
+      ));
+    } else {
+      return sortedOrGroupedItems.map((item) => (
+        <Item key={item.id} {...item} className="border p-2" />
+      ));
+    }
   };
 
   return (
-    <div className="flex items-start justify-center h-screen bg-gray-800 pt-10">
-      <form onSubmit={handleSubmit} className="bg-Gunmetal text-white rounded-lg p-4 shadow-xl">
-        <div className="mb-2">
-          <input
-            id="itemName"
-            type="text"
-            placeholder="Item name"
-            required
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            className="mt-1 block w-full px-3 py-2 bg-black border rounded-md shadow-sm focus:outline-none focus:border-blue-300"
-          />
-        </div>
-        <div className="mb-2">
-          <label htmlFor="quantity" className="block text-sm font-medium">
-            Quantity
-          </label>
-          <input
-            id="quantity"
-            type="number"
-            min={1}
-            required 
-            value={quantity}
-            onChange={(e) => setQuantity(parseInt(e.target.value))}
-            className="mt-1 block w-full px-3 py-2 bg-black border rounded-md shadow-sm focus:outline-none focus:border-blue-300"
-          />
-        </div>
-        <div className="mb-4">
-          <label htmlFor="category" className="block text-sm font-medium">
-            Category
-          </label>
-          <select
-            id="category"
-            value={category}
-            onChange={(e) => setCategory(e.target.value)}
-            className="block w-full mt-1 px-3 py-2 bg-black border rounded-md shadow-sm focus:outline-none focus:border-blue-300"
-          >
-            <option value="produce">Produce</option>
-            <option value="dairy">Dairy</option>
-            <option value="bakery">Bakery</option>
-            <option value="meat">Meat</option>
-            <option value="frozen-foods">Frozen Foods</option>
-            <option value="canned-goods">Canned Goods</option>
-            <option value="dry-goods">Dry Goods</option>
-            <option value="beverages">Beverages</option>
-            <option value="snacks">Snacks</option>
-            <option value="household">Household</option>
-            <option value="other">Other</option>
-          </select>
-        </div>
+    <div className="item-list">
+      <div className="mb-4">
         <button
-          type="submit"
-          className="w-full flex justify-center items-center px-4 py-2 bg-blue-500 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+          className={`mr-2 p-2 ${sortBy === 'name' ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
+          onClick={() => setSortBy('name')}
         >
-          {isSubmitted ? (
-            // Check mark icon
-            <svg className="w-6 h-6" fill="none" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" stroke="currentColor">
-              <path d="M5 13l4 4L19 7"></path>
-            </svg>
-          ) : (
-            // Plus icon
-            <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4"></path>
-            </svg>
-          )}
+          Sort by Name
         </button>
-      </form>
+        <button
+          className={`mr-2 p-2 ${sortBy === 'category' ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
+          onClick={() => setSortBy('category')}
+        >
+          Sort by Category
+        </button>
+        <button
+          className={`p-2 ${sortBy === 'groupedCategory' ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
+          onClick={() => setSortBy('groupedCategory')}
+        >
+          Group by Category
+        </button>
+      </div>
+      <ul className="list-none">
+        {renderItems()}
+      </ul>
     </div>
   );
 }
+
 

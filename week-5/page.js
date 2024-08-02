@@ -1,9 +1,10 @@
-import NewItem from "./new-Item"
+import ItemList from "./item-list"
 
 export default function page() {
   return (
-  <div>
-    <NewItem/>
-  </div>
-  )
+    <main>
+      <h1>Shopping List</h1>
+      <ItemList />
+    </main>
+  );
 }

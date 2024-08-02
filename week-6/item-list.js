@@ -1,86 +1,84 @@
-import React from "react";
+"use client"
+import React, { useState } from 'react';
 import Item from "./item";
-import { useState } from "react";
-export default function ItemList({ items }) {
-  const [sortBy, setSortBy] = useState("name");
+import itemsData from './items.json';
 
-  // Function to group items by category ensuring immutability
+export default function ItemList() {
+  const [sortBy, setSortBy] = useState("name");
+  const [items, setItems] = useState(itemsData);
+
+  // Function to group items by category
   const groupByCategory = (items) => {
     return items.reduce((groups, item) => {
       const { category } = item;
-      if (!groups[category]) {
-        groups[category] = []; // Initialize if not already done
-      }
-      groups[category] = [...groups[category], item]; // Use spread operator to add item
+      groups[category] = groups[category] || [];
+      groups[category].push(item);
       return groups;
     }, {});
   };
 
+  // Function to sort items by the current method
   const sortItems = (items, sortBy) => {
     switch (sortBy) {
-      case "name":
+      case 'name':
         return [...items].sort((a, b) => a.name.localeCompare(b.name));
-      case "category":
+      case 'category':
         return [...items].sort((a, b) => a.category.localeCompare(b.category));
       default:
-        return items; // For 'groupedCategory', sorting is handled separately
+        return items; // In case of groupedCategory, we handle sorting separately
     }
   };
 
-  const sortedOrGroupedItems =
-    sortBy === "groupedCategory"
-      ? groupByCategory(sortItems([...items], "name")) // Ensure immutability by spreading items
-      : sortItems([...items], sortBy); // Spread items to avoid mutation
+  // Determine how to sort or group items based on `sortBy`
+  const sortedOrGroupedItems = sortBy === 'groupedCategory'
+    ? groupByCategory(sortItems(items, 'name')) // Group by category after sorting by name
+    : sortItems(items, sortBy);
 
+  // Render items or grouped items based on `sortBy`
   const renderItems = () => {
-    if (sortBy === "groupedCategory") {
+    if (sortBy === 'groupedCategory') {
       return Object.entries(sortedOrGroupedItems).map(([category, items]) => (
-        <div key={category} className="category-group mb-4">
-          <h3 className="capitalize font-bold text-white bg-gray-800 p-2 rounded">
-            {category}
-          </h3>
-          <ul className="flex flex-wrap justify-start gap-2">
-            {items.map((item) => (
-              <Item key={item.id} {...item} />
-            ))}
-          </ul>
-        </div>
+        <li key={category} className="border p-2">
+          <h3 className="capitalize font-bold">{category}</h3>
+          {items.map((item) => (
+            <Item key={item.id} {...item} />
+          ))}
+        </li>
       ));
     } else {
-      return (
-        <ul className="list-none ml-1 mt-0 inline-block">
-          {" "}
-          {/* Adjusted top margin here */}
-          {sortedOrGroupedItems.map((item) => (
-            <Item key={item.id} {...item} className="border p-2" />
-          ))}
-        </ul>
-      );
+      return sortedOrGroupedItems.map((item) => (
+        <Item key={item.id} {...item} className="border p-2" />
+      ));
     }
   };
 
   return (
-    <div className="item-list i">
-      <div className="mb-4 bg-Gumetal">
+    <div className="item-list">
+      <div className="mb-4">
         <button
-          className={`ml-1 mr-2 p-2 ${
-            sortBy === "name" ? "bg-cyan-900 text-white" : "bg-gray-200"
-          } rounded-md`}
-          onClick={() => setSortBy("name")}
+          className={`mr-2 p-2 ${sortBy === 'name' ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
+          onClick={() => setSortBy('name')}
         >
-          Name
+          Sort by Name
         </button>
         <button
-          className={`mr-2 p-2 ml-1 mt-1 rounded-md ${
-            sortBy === "category" ? "bg-cyan-900 text-white" : "bg-gray-200"
-          } `}
-          onClick={() => setSortBy("category")}
+          className={`mr-2 p-2 ${sortBy === 'category' ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
+          onClick={() => setSortBy('category')}
         >
-          Category
+          Sort by Category
+        </button>
+        <button
+          className={`p-2 ${sortBy === 'groupedCategory' ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
+          onClick={() => setSortBy('groupedCategory')}
+        >
+          Group by Category
         </button>
       </div>
-      {renderItems()}
+      <ul className="list-none">
+        {renderItems()}
+      </ul>
     </div>
   );
 }
+
 
